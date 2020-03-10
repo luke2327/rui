@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./dist/index.js",
+    "start:dev": "ts-node ./src/index.ts",
+    "compile": "tsc -p .",
+    "compile:test": "tsc -p . --noEmit",
+    "lint": "eslint --ext .ts --ignore-path .gitignore .",
+    "lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
+    "test": "npm run lint && npm run compile:test"
   },
   "repository": {
     "type": "git",
