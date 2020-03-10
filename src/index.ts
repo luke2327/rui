@@ -23,4 +23,4 @@ client.once('disconnect', () => {
 /** receive */
 receiver.init(client);
 
-client.login('Njc4MjE4NDQ1MzE3MzQxMTk3.Xmbe2w.eA_I4Qty6-jSll-necB2JxhcHVY');
+client.login('');
