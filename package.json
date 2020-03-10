@@ -28,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "eslint": "^6.8.0",
+    "fs": "0.0.1-security",
     "ts-node": "^8.6.2",
     "typescript": "^3.8.3"
   },

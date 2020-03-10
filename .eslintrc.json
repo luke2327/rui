@@ -12,5 +12,8 @@
   "parserOptions": {
     "sourceType": "module",
     "project": "./tsconfig.json"
+  },
+  "rules": {
+    "no-unbound-method": 0
   }
 }
