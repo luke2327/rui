@@ -1,25 +1,31 @@
 import { Client, Message, PartialGuildMember } from 'discord.js';
 import { PREFIX } from '../config/settings';
-import { actionLogFileLocation } from '../config/settings';
+import { actionLogFileLocation } from '../config/fileStream';
+
 import actions from './actions';
 import log from './utils/logUtils';
 
 export default {
   init: (client: Client): void => {
-    client.on('ready', () => {
-      console.log('ready...');
-      console.log(client.user);
-    });
-
     /** message */
     client.on('message', (message: Message) => {
       const msgContent = message.content;
       const msgAuthor = message.author;
 
-      if (msgContent === `${PREFIX}ping`) {
+      if (msgContent.startsWith(`${PREFIX}help`)) {
+        actions.help(message);
+      } else if (msgContent.startsWith(`${PREFIX}ping`)) {
         actions.ping(message);
-      } else if (msgContent === `${PREFIX}avatar`) {
+      } else if (msgContent.startsWith(`${PREFIX}play`)) {
+        actions.play(message);
+      } else if (msgContent.startsWith(`${PREFIX}skip`)) {
+        actions.skip(message);
+      } else if (msgContent.startsWith(`${PREFIX}stop`)) {
+        actions.stop(message);
+      } else if (msgContent.startsWith(`${PREFIX}avatar`)) {
         actions.avatar(message);
+      } else {
+        actions.invalid(message);
       }
 
       /** logging */
