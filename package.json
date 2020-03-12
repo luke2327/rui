@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./dist/index.js",
-    "start:dev": "ts-node ./src/index.ts",
+    "start:dev": "NODE_ENV=development TOKEN= ts-node ./src/index.ts",
     "compile": "tsc -p .",
+    "compile:start": "tsc -p . && NODE_ENV=development TOKEN= node ./dist/index.js",
     "compile:test": "tsc -p . --noEmit",
     "lint": "eslint --ext .ts --ignore-path .gitignore .",
     "lint:fix": "eslint --ext .ts --ignore-path .gitignore . --fix",
@@ -24,12 +25,14 @@
   },
   "homepage": "https://github.com/luke2327/rui#readme",
   "devDependencies": {
+    "@discordjs/opus": "^0.1.0",
     "@types/node": "^13.9.0",
+    "@types/ws": "^7.2.2",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "eslint": "^6.8.0",
     "fs": "0.0.1-security",
-    "ts-node": "^8.6.2",
+    "ts-node": "8.7.0",
     "typescript": "^3.8.3"
   },
   "dependencies": {
