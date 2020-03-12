@@ -15,7 +15,7 @@ export default {
     message.channel.send('pong');
   },
 
-  play: async (message: Message, serverQueue: any, queue: Map<any, any>): Promise<void> => {
+  play: async (message: Message, serverQueue: any, queue: Map<any, any>): Promise<any> => {
     const args = message.content.split(' ');
     const voiceChannel = message.member ? message.member.voice.channel : null;
 
@@ -64,11 +64,30 @@ export default {
 
         return;
       }
+    } else {
+      serverQueue.songs.push(song);
+
+      message.channel.send(`${song.title} has been added to the queue!`);
+
+      // return message.channel.send(serverQueue);
     }
   },
 
-  skip: (message: Message): void => {
-    message.channel.send('skip');
+  skip: (message: Message, serverQueue: any): any => {
+    if (message.member && message.member.voice && !message.member.voice.channel) {
+      return message.channel.send('You have to be in a voice channel to stop the music!');
+    }
+    if (!serverQueue) {
+      return message.channel.send('There is no song that I could skip!');
+    }
+
+    message.channel.send('successfully skip!');
+
+    try {
+      serverQueue.connection.dispatcher.end();
+    } catch (err) {
+      message.channel.send(err.toString());
+    }
   },
 
   stop: (message: Message): void => {
@@ -91,8 +110,6 @@ export default {
 
 const playSong = async (guild: any, song: any, queue: Map<any, any>): Promise<void> => {
   const serverQueue = queue.get(guild.id);
-
-  console.log(serverQueue);
 
   if (!song) {
     serverQueue.voiceChannel.leave();
