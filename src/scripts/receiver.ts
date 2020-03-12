@@ -26,7 +26,7 @@ export default {
       } else if (msgContent.startsWith(`${PREFIX}play`)) {
         actions.play(message, serverQueue, queue);
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
-        actions.skip(message);
+        actions.skip(message, serverQueue);
       } else if (msgContent.startsWith(`${PREFIX}stop`)) {
         actions.stop(message);
       } else if (msgContent.startsWith(`${PREFIX}avatar`)) {
