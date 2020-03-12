@@ -19,7 +19,6 @@ export default {
       const msgContent = message.content;
       const msgAuthor = message.author;
 
-
       if (msgContent.startsWith(`${PREFIX}help`)) {
         actions.help(message);
       } else if (msgContent.startsWith(`${PREFIX}ping`)) {

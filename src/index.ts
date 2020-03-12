@@ -1,12 +1,18 @@
-import { Client } from 'discord.js';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import Discord from 'discord.js';
+import receiver from './scripts/receiver';
+import log from './scripts/utils/logUtils';
+// import ytdl from 'ytdl-core';
+
 import { commonLogFileLocation } from './config/fileStream';
 import { BOT_NAME, VERSION } from './config/settings';
 
-import receiver from './scripts/receiver';
-import log from './scripts/utils/logUtils';
-
 /** create new Client object */
-const client = new Client();
+const client = new Discord.Client();
+
+/** get token */
+const TOKEN = process.env.TOKEN;
+
 
 client.once('ready', () => {
   log.logger('info', commonLogFileLocation, `BOT_NAME => ${BOT_NAME} | VERSION => ${VERSION} | STATUS => ready`);
@@ -23,4 +29,4 @@ client.once('disconnect', () => {
 /** receive */
 receiver.init(client);
 
-client.login('');
+client.login(TOKEN);

@@ -1,4 +1,6 @@
 import { Message, GuildChannel } from 'discord.js';
+import { QueueContract } from './models/actions.interface';
+import ytdl from 'ytdl-core';
 
 export default {
   invalid: (message: Message): void => {
@@ -13,8 +15,56 @@ export default {
     message.channel.send('pong');
   },
 
-  play: (message: Message): void => {
-    message.channel.send('play');
+  play: async (message: Message, serverQueue: any, queue: Map<any, any>): Promise<void> => {
+    const args = message.content.split(' ');
+    const voiceChannel = message.member ? message.member.voice.channel : null;
+
+    if (!voiceChannel) return;
+
+    const clientUser = message.client ? message.client.user : null;
+
+    if (!clientUser) return;
+
+    const permissions = voiceChannel ? voiceChannel.permissionsFor(clientUser) : null;
+
+    if (!permissions) return;
+
+    if (!permissions.has('CONNECT') || !permissions.has('SPEAK')) return;
+
+    const songInfo = await ytdl.getInfo(args[1]);
+    const song = {
+      title: songInfo.title,
+      url: songInfo.video_url
+    };
+
+    if (!serverQueue && message.guild) {
+      const queueContract: QueueContract = {
+        textChannel: message.channel,
+        voiceChannel: voiceChannel,
+        connection: null,
+        songs: [],
+        volume: 5,
+        playing: true
+      };
+
+      queueContract.songs.push(song);
+
+      try {
+        const connection = await voiceChannel.join();
+
+        queueContract.connection = connection as any;
+
+        queue.set(message.guild.id, queueContract);
+
+        playSong(message.guild, queueContract.songs[0], queue);
+      } catch (err) {
+        message.channel.send(err.toString());
+
+        queue.delete(message.guild.id);
+
+        return;
+      }
+    }
   },
 
   skip: (message: Message): void => {
@@ -37,4 +87,29 @@ export default {
 
     channel.send(`Welcome to the server, ${member}`);
   }
+}
+
+const playSong = async (guild: any, song: any, queue: Map<any, any>): Promise<void> => {
+  const serverQueue = queue.get(guild.id);
+
+  console.log(serverQueue);
+
+  if (!song) {
+    serverQueue.voiceChannel.leave();
+    queue.delete(guild.id);
+
+    return;
+  }
+
+  await serverQueue.connection.play(ytdl(song.url), { volume: 0.5 }).on('end', () => {
+      console.log('music end');
+      serverQueue.songs.shift();
+
+      playSong(guild, serverQueue.songs[0], queue);
+    }).on('error', (error: Error) => {
+      console.log(error);
+    });
+
+  /** 아래 코드 추가하면 왠지 모르겠는데 소리가 안들림 */
+  // dispatcher.setVolumeLogarithmic(serverQueue / 5);
 }
