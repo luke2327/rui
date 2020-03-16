@@ -1,7 +1,9 @@
  /* tslint:disable:no-unused-variable */
 import { Client, Message, User, PartialGuildMember } from 'discord.js';
-import { PREFIX } from '../config/settings';
 import { USAGE_COMMANDS } from './models/commands.type';
+import { QUEUE, EMPTY_QUEUE } from './models/actions.type';
+import { QueueContract } from './models/actions.interface';
+import { PREFIX } from '../config/settings';
 import { actionLogFileLocation } from '../config/fileStream';
 
 import actions from './actions';
@@ -9,13 +11,13 @@ import log from './utils/logUtils';
 
 export default {
   init: (client: Client): void => {
-    const queue = new Map();
+    const queue: QUEUE | EMPTY_QUEUE = new Map();
 
     /** message */
     client.on('message', (message: Message) => {
       if (message.author.bot || !message.content.startsWith(PREFIX)) return;
 
-      const serverQueue = message.guild ? queue.get(message.guild.id) : [];
+      const serverQueue: QueueContract = message.guild ? queue.get(message.guild.id) : [];
 
       const msgContent = message.content as USAGE_COMMANDS;
       const msgAuthor = message.author as User;
@@ -27,15 +29,31 @@ export default {
       } else if (msgContent.startsWith(`${PREFIX}play`)) {
         actions.play(message, serverQueue, queue);
       } else if (msgContent.startsWith(`${PREFIX}search`)) {
-        actions.search(message, serverQueue);
+        actions.search(message);
       } else if(msgContent.startsWith(`${PREFIX}queue`)) {
-        actions.queue(message, serverQueue);
+        if (!serverQueue.connection) {
+          actions.undefinedConnection(message);
+        } else {
+          actions.queue(message, serverQueue.songs);
+        }
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
-        actions.skip(message, serverQueue);
+        if (!serverQueue.connection) {
+          actions.undefinedConnection(message);
+        } else {
+          actions.skip(message, serverQueue.connection);
+        }
       } else if (msgContent.startsWith(`${PREFIX}pause`)) {
-        actions.pause(message, serverQueue);
+        if (!serverQueue.connection) {
+          actions.undefinedConnection(message);
+        } else {
+          actions.pause(message, serverQueue.connection);
+        }
       } else if (msgContent.startsWith(`${PREFIX}resume`)) {
-        actions.resume(message, serverQueue);
+        if (!serverQueue.connection) {
+          actions.undefinedConnection(message);
+        } else {
+          actions.resume(message, serverQueue.connection);
+        }
       } else if (msgContent.startsWith(`${PREFIX}stop`)) {
         actions.stop(message);
       } else if (msgContent.startsWith(`${PREFIX}avatar`)) {

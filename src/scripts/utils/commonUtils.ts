@@ -10,7 +10,7 @@ export default {
       : params;
   },
 
-  send: async <ResponseData> (url: URL, req: any, method: METHOD): Promise<ResponseData> => {
+  send: async <ResponseData> (url: URL, req: object, method: METHOD): Promise<ResponseData> => {
     if (method === 'GET') {
       return await axios.get(url, { params: req });
     } else if (method === 'POST') {

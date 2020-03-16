@@ -26,7 +26,8 @@ client.once('disconnect', () => {
   log.logger('warn', commonLogFileLocation, `BOT_NAME => ${BOT_NAME} | VERSION => ${VERSION} | STATUS => disconnect`);
 });
 
+/** login */
+client.login(TOKEN);
+
 /** receive */
 receiver.init(client);
-
-client.login(TOKEN);

@@ -1,5 +1,6 @@
-import { Message, GuildChannel, VoiceConnection, Guild } from 'discord.js';
+import { Message, GuildChannel, VoiceConnection, Guild, StreamDispatcher } from 'discord.js';
 import { QueueContract } from './models/actions.interface';
+import { QUEUE, EMPTY_QUEUE } from './models/actions.type';
 import { Song } from './models/song.interface';
 import { names } from './utils/names';
 
@@ -27,7 +28,7 @@ export default {
     });
   },
 
-  play: async (message: Message, serverQueue: any, queue: Map<any, any>): Promise<void> => {
+  play: async (message: Message, serverQueue: QueueContract, queue: QUEUE | EMPTY_QUEUE): Promise<void> => {
     const args = message.content.split(' ');
     const voiceChannel = message.member ? message.member.voice.channel : null;
 
@@ -67,13 +68,14 @@ export default {
 
       try {
         const connection: VoiceConnection = await voiceChannel.join();
+        const firstSong = queueContract.songs[0];
 
-        queueContract.connection = connection as any;
+        queueContract.connection = connection as VoiceConnection;
 
         queue.set(message.guild.id, queueContract);
         message.channel.send(`\`Playing\` ${song.title}`);
 
-        playSong(message, message.guild as Guild, queueContract.songs[0], queue);
+        playSong(message, message.guild as Guild, firstSong, queue as QUEUE);
       } catch (err) {
         const errMsg = `An error has occurred. ${err.toString()}`;
 
@@ -91,7 +93,7 @@ export default {
     }
   },
 
-  search: (message: Message, serverQueue: any): void => {
+  search: (message: Message): void => {
     const searchKey = message.toString().split(' ')[1];
 
     if (!searchKey) {
@@ -103,38 +105,35 @@ export default {
     yt.searchVideo(searchKey);
   },
 
-  queue: (message: Message, serverQueue: any): void => {
-    if (!serverQueue || !serverQueue.songs) {
+  queue: (message: Message, songs: Array<Song>): void => {
+    if (!songs.length) {
       message.channel.send('There are no stacked song queues');
-    } else {
-      message.channel.send(`\`Staked queues \n ${serverQueue.songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
+
+      return;
     }
+
+    message.channel.send(`\`Staked queues \n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
   },
 
-  skip: (message: Message, serverQueue: any): void => {
+  skip: (message: Message, connection: VoiceConnection): void => {
     if (message.member && message.member.voice && !message.member.voice.channel) {
       message.channel.send('You have to be in a voice channel to stop the music!');
-    }
-    if (!serverQueue) {
-      message.channel.send('There is no song that I could skip!');
+
+      return;
     }
 
-    try {
-      serverQueue.connection.dispatcher.end();
-      message.channel.send('successfully skip!');
-    } catch (err) {
-      message.channel.send(err.toString());
-    }
+    connection.dispatcher.end();
+    message.channel.send('successfully skip!');
   },
 
-  pause: (message: Message, serverQueue: any): void => {
-    serverQueue.connection.dispatcher.pause();
+  pause: (message: Message, connection: VoiceConnection): void => {
+    connection.dispatcher.pause();
 
     message.channel.send('\`pause song\`');
   },
 
-  resume: (message: Message, serverQueue: any): void => {
-    serverQueue.connection.dispatcher.resume();
+  resume: (message: Message, connection: VoiceConnection): void => {
+    connection.dispatcher.resume();
 
     message.channel.send('\`resume song\`');
   },
@@ -176,12 +175,21 @@ export default {
     if (!channel) return;
 
     channel.send(`Welcome to the server, ${member}`);
+  },
+
+  undefinedConnection: (message: Message): void => {
+    message.channel.send("There's no song to pause");
+
+    return;
   }
 }
 
-const playSong = async (message: Message, guild: Guild, song: Song, queue: Map<any, any>): Promise<void> => {
-  const serverQueue = queue.get(guild.id);
-  const dispatcher = serverQueue.connection.play(ytdl(song.url), { volume: 0.5 });
+const playSong = async (message: Message, guild: Guild, song: Song, queue: QUEUE): Promise<void> => {
+  const serverQueue = queue.get(guild.id) as QueueContract;
+
+  if (!serverQueue.connection) return;
+
+  const dispatcher: StreamDispatcher = serverQueue.connection.play(ytdl(song.url), { volume: 0.5 });
 
   dispatcher.on('finish', () => {
     serverQueue.songs.shift();
