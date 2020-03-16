@@ -1,6 +1,7 @@
  /* tslint:disable:no-unused-variable */
-import { Client, Message, PartialGuildMember } from 'discord.js';
+import { Client, Message, User, PartialGuildMember } from 'discord.js';
 import { PREFIX } from '../config/settings';
+import { USAGE_COMMANDS } from './models/commands.type';
 import { actionLogFileLocation } from '../config/fileStream';
 
 import actions from './actions';
@@ -16,8 +17,8 @@ export default {
 
       const serverQueue = message.guild ? queue.get(message.guild.id) : [];
 
-      const msgContent = message.content;
-      const msgAuthor = message.author;
+      const msgContent = message.content as USAGE_COMMANDS;
+      const msgAuthor = message.author as User;
 
       if (msgContent.startsWith(`${PREFIX}help`)) {
         actions.help(message);
@@ -25,12 +26,22 @@ export default {
         actions.ping(message);
       } else if (msgContent.startsWith(`${PREFIX}play`)) {
         actions.play(message, serverQueue, queue);
+      } else if (msgContent.startsWith(`${PREFIX}search`)) {
+        actions.search(message, serverQueue);
+      } else if(msgContent.startsWith(`${PREFIX}queue`)) {
+        actions.queue(message, serverQueue);
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
         actions.skip(message, serverQueue);
+      } else if (msgContent.startsWith(`${PREFIX}pause`)) {
+        actions.pause(message, serverQueue);
+      } else if (msgContent.startsWith(`${PREFIX}resume`)) {
+        actions.resume(message, serverQueue);
       } else if (msgContent.startsWith(`${PREFIX}stop`)) {
         actions.stop(message);
       } else if (msgContent.startsWith(`${PREFIX}avatar`)) {
         actions.avatar(message);
+      } else if (msgContent.startsWith(`${PREFIX}녜힁`)) {
+        actions.createNames(message);
       } else {
         actions.invalid(message);
       }
