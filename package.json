@@ -34,7 +34,6 @@
     "axios": "^0.19.2",
     "eslint": "^6.8.0",
     "fs": "0.0.1-security",
-    "ping": "^0.2.2",
     "ts-node": "8.7.0",
     "typescript": "^3.8.3"
   },
