@@ -247,11 +247,11 @@ const getPreference = (message: Message): Preference => {
     throw new Error ('Importing permissions fails, or you do not have them')
   };
 
-  const result = {
+  const preference = {
     voiceChannel, clientUser, permissions
   };
 
-  return result;
+  return preference;
 }
 
 const getConnection = async (voiceChannel: VoiceChannel): Promise<VoiceConnection> => {
@@ -259,19 +259,19 @@ const getConnection = async (voiceChannel: VoiceChannel): Promise<VoiceConnectio
 }
 
 const getQueueContract = async (message: Message, voiceChannel: VoiceChannel, song: Song): Promise<QueueContract> => {
-    const queueContract: QueueContract = {
-      textChannel: message.channel,
-      voiceChannel: voiceChannel,
-      connection: null,
-      songs: [],
-      volume: 5,
-      playing: true
-    };
+  const queueContract: QueueContract = {
+    textChannel: message.channel,
+    voiceChannel: voiceChannel,
+    connection: null,
+    songs: [],
+    volume: 5,
+    playing: true
+  };
 
-    queueContract.songs.push(song);
-    queueContract.connection = await getConnection(voiceChannel) as VoiceConnection;
+  queueContract.songs.push(song);
+  queueContract.connection = await getConnection(voiceChannel) as VoiceConnection;
 
-    return queueContract;
+  return queueContract;
 }
 
 const playStream = async (message: Message, voiceChannel: VoiceChannel, serverQueue: QueueContract, queue: QUEUE, song: Song): Promise<void> => {
