@@ -29,27 +29,27 @@ export default {
       } else if (msgContent.startsWith(`${PREFIX}play`)) {
         actions.play(message, serverQueue, queue);
       } else if (msgContent.startsWith(`${PREFIX}search`)) {
-        actions.search(message);
+        actions.search(message, serverQueue, queue);
       } else if(msgContent.startsWith(`${PREFIX}queue`)) {
-        if (!serverQueue.connection) {
+        if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
           actions.queue(message, serverQueue.songs);
         }
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
-        if (!serverQueue.connection) {
+        if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
           actions.skip(message, serverQueue.connection);
         }
       } else if (msgContent.startsWith(`${PREFIX}pause`)) {
-        if (!serverQueue.connection) {
+        if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
           actions.pause(message, serverQueue.connection);
         }
       } else if (msgContent.startsWith(`${PREFIX}resume`)) {
-        if (!serverQueue.connection) {
+        if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
           actions.resume(message, serverQueue.connection);
