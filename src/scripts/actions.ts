@@ -1,6 +1,6 @@
 import { Message, GuildChannel, VoiceConnection, Guild, StreamDispatcher, VoiceChannel, ClientUser, Permissions } from 'discord.js';
 import { QueueContract } from './models/actions.interface';
-import { QUEUE, EMPTY_QUEUE } from './models/actions.type';
+import { QUEUE } from './models/actions.type';
 import { Song } from './models/song.interface';
 import { names } from './utils/names';
 
@@ -14,7 +14,22 @@ export default {
   },
 
   help: (message: Message): void => {
-    message.channel.send('메뉴얼');
+    message.channel.send(`
+    \`[commands] => (parameters)\`
+
+**MUSIC**
+**[1]** \`play => youtube url\`
+**[2]** \`search => search word && limit (default 10)\`
+**[3]** \`stop\`
+**[4]** \`skip\`
+**[5]** \`queue\`
+**[6]** \`pause\`
+**[7]** \`resume\`
+
+**UTILS**
+**[1]** \`ping\`
+**[2]** \`녜힁 => number\`
+    `);
   },
 
   ping: (message: Message): void => {
@@ -23,11 +38,11 @@ export default {
     });
   },
 
-  play: async (message: Message, serverQueue: QueueContract, queue: QUEUE | EMPTY_QUEUE): Promise<void> => {
-    const args = message.content.split(' ');
+  play: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<void> => {
+    const searchKey = message.content.split(' ')[1];
     const preference = getPreference(message);
     const voiceChannel = preference.voiceChannel;
-    const songInfo: ytdl.videoInfo = await ytdl.getInfo(args[1]);
+    const songInfo: ytdl.videoInfo = await ytdl.getInfo(searchKey);
     const song: Song = {
       title: songInfo.title,
       url: songInfo.video_url
@@ -36,8 +51,9 @@ export default {
     playStream(message, voiceChannel, serverQueue, queue, song);
   },
 
-  search: async (message: Message, serverQueue: QueueContract, queue: QUEUE | EMPTY_QUEUE): Promise<void> => {
-    const searchKey = message.toString().split(' ')[1];
+  search: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<void> => {
+    const searchKey = message.toString().split(' ')[1],
+          searchLimit = parseInt(message.toString().split(' ')[2]) || 10;
 
     if (!searchKey) {
       message.channel.send('Please enter a word to search for');
@@ -45,15 +61,12 @@ export default {
       return;
     }
 
-    const searchResults = await yt.searchVideo(searchKey);
-
-    let sliceResults = searchResults.slice(0, 10);
+    const searchResults = await yt.searchVideo(searchKey, searchLimit);
+    const sliceResults = searchResults.slice(0, searchLimit);
     let respMsg = '';
 
-    console.log(sliceResults);
-
     for (let i in sliceResults) {
-      respMsg += `**[${parseInt(i) + 1}]:** \`${sliceResults[i].snippet.title}\`\n`;
+      respMsg += `**[${parseInt(i) + 1}]** \`${sliceResults[i].snippet.title}\`\n`;
     }
 
     /** Then add some more text info instructions */
@@ -63,7 +76,7 @@ export default {
     message.channel.send(respMsg);
 
     /** make message collector */
-    const filter = (msg: any) => !isNaN(msg.content) && msg.content < sliceResults.length + 1 && msg.content > 0;
+    const filter = (msg: Message) => !isNaN(parseInt(msg.content)) && parseInt(msg.content) < sliceResults.length + 1 && parseInt(msg.content) > 0;
     const collector = message.channel.createMessageCollector(filter);
 
     collector.once('collect', async (msg) => {
@@ -74,8 +87,6 @@ export default {
         title: songInfo.snippet.title,
         url: 'https://www.youtube.com/watch?v=' + songInfo.id.videoId
       };
-
-      console.log(song);
 
       playStream(message, voiceChannel, serverQueue, queue, song);
     })
@@ -89,7 +100,7 @@ export default {
       return;
     }
 
-    message.channel.send(`\`Staked queues \n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
+    message.channel.send(`\`Staked queues | \n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
   },
 
   skip: (message: Message, connection: VoiceConnection): void => {
@@ -100,23 +111,28 @@ export default {
     }
 
     connection.dispatcher.end();
-    message.channel.send('successfully skip!');
+    message.channel.send('\`successfully skip\`');
   },
 
-  pause: (message: Message, connection: VoiceConnection): void => {
+  pause: (message: Message, connection: VoiceConnection, queue: QUEUE): void => {
     connection.dispatcher.pause();
 
-    message.channel.send('\`pause song\`');
+    message.channel.send(`\`Pause | ${message.guild && message.guild.id ? queue.get(message.guild.id).songs[0].title : ''}\``);
   },
 
-  resume: (message: Message, connection: VoiceConnection): void => {
+  resume: (message: Message, connection: VoiceConnection, queue: QUEUE): void => {
     connection.dispatcher.resume();
 
-    message.channel.send('\`resume song\`');
+    message.channel.send(`\`Resume | ${message.guild && message.guild.id ? queue.get(message.guild.id).songs[0].title : ''}\``);
   },
 
-  stop: (message: Message): void => {
-    message.channel.send('stop');
+  stop: (message: Message, voiceChannel: VoiceChannel, queue: QUEUE): void => {
+    message.channel.send('Stop | leave channel');
+    voiceChannel.leave();
+
+    if (message.guild && message.guild.id) {
+      queue.delete(message.guild.id);
+    }
   },
 
   avatar: (message: Message): void => {
@@ -174,7 +190,7 @@ const playSong = async (message: Message, guild: Guild, song: Song, queue: QUEUE
     const currentSong = serverQueue.songs[0];
 
     if (currentSong) {
-      message.channel.send(`\`Next\` ${currentSong.title}`);
+      message.channel.send(`\`Next | ${currentSong.title}\``);
     } else {
       serverQueue.voiceChannel.leave();
 
@@ -228,7 +244,7 @@ const getPreference = (message: Message): Preference => {
 
   const permissions = getPermissions(voiceChannel, clientUser);
   if (!permissions || !permissions.has('CONNECT') || !permissions.has('SPEAK')) {
-    throw new Error ('failed get preference')
+    throw new Error ('Importing permissions fails, or you do not have them')
   };
 
   const result = {
@@ -258,18 +274,17 @@ const getQueueContract = async (message: Message, voiceChannel: VoiceChannel, so
     return queueContract;
 }
 
-const playStream = async (message: Message, voiceChannel: VoiceChannel, serverQueue: any, queue: QUEUE | EMPTY_QUEUE, song: Song): Promise<void> => {
+const playStream = async (message: Message, voiceChannel: VoiceChannel, serverQueue: QueueContract, queue: QUEUE, song: Song): Promise<void> => {
   if (!serverQueue && message.guild) {
     const queueContract = await getQueueContract(message, voiceChannel, song);
     const firstSong = queueContract.songs[0];
 
     queue.set(message.guild.id, queueContract);
-    message.channel.send(`\`Playing\` ${song.title}`);
+    message.channel.send(`\`Play | ${song.title}\``);
 
     playSong(message, message.guild as Guild, firstSong, queue as QUEUE);
   } else {
     serverQueue.songs.push(song);
-
-    message.channel.send(`${song.title} has been added to the queues!`);
+    message.channel.send(`${song.title}\n\`has been added to the queues\``);
   }
 };

@@ -5,10 +5,10 @@ const defaultUrl = 'https://www.googleapis.com/youtube/v3';
 const YOUTUBE_TOKEN = process.env.YOUTUBE_TOKEN;
 
 export default {
-  searchVideo: async (searchKey: string): Promise<Array<YoutubeResults>> => {
+  searchVideo: async (searchKey: string, searchLimit: number): Promise<Array<YoutubeResults>> => {
     const part = 'snippet',
           q = searchKey,
-          maxResults = 50,
+          maxResults = searchLimit,
           type = 'video',
           key = YOUTUBE_TOKEN;
 
