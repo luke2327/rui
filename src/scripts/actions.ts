@@ -23,7 +23,6 @@ export default {
   },
 
   help: async (message: Message): Promise<Error | void> => {
-    throw Error('ssss');
     message.channel.send(`
 \`[commands] => (parameters)\`
 
