@@ -7,13 +7,23 @@ import { names } from './utils/names';
 import yt   from './utils/yt';
 import log  from './utils/logUtils';
 import ytdl from 'ytdl-core';
+import commonUtils from './utils/commonUtils';
+import { actionLogFileLocation } from '../config/fileStream';
 
 export default {
-  invalid: (message: Message): void => {
+  errorHandling: (message: Message, e: Error | string): void => {
+    const msg = commonUtils.errToString(e);
+
+    message.reply(msg);
+    log.logger('error', actionLogFileLocation, `[${message.author}] => ${msg}`);
+  },
+
+  invalid: async (message: Message): Promise<Error | void> => {
     message.channel.send('정확한 명령어를 입력해 주세요');
   },
 
-  help: (message: Message): void => {
+  help: async (message: Message): Promise<Error | void> => {
+    throw Error('ssss');
     message.channel.send(`
 \`[commands] => (parameters)\`
 
@@ -33,13 +43,13 @@ export default {
     `);
   },
 
-  ping: (message: Message): void => {
+  ping: async (message: Message): Promise<Error | void> => {
     message.channel.send('Pinging ...').then(msg => {
       msg.edit(`Ping: ${Date.now() - msg.createdTimestamp}`);
     });
   },
 
-  play: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<void> => {
+  play: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<Error | void> => {
     const searchKey = message.content.split(' ')[1];
     const preference = getPreference(message);
     const voiceChannel = preference.voiceChannel;
@@ -52,7 +62,7 @@ export default {
     playStream(message, voiceChannel, serverQueue, queue, song);
   },
 
-  search: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<void> => {
+  search: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<Error | void> => {
     const searchKey = message.toString().split('!search')[1],
           searchLimit = 10;
 
@@ -101,7 +111,7 @@ export default {
     });
   },
 
-  queue: (message: Message, songs: Array<Song>): void => {
+  queue: async (message: Message, songs: Array<Song>): Promise<Error | void> => {
     if (!songs.length) {
       message.channel.send('There are no stacked song queues');
 
@@ -111,7 +121,7 @@ export default {
     message.channel.send(`\`Staked queues\n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
   },
 
-  delete: (message: Message, songs: Array<Song>): void => {
+  delete: async (message: Message, songs: Array<Song>): Promise<Error | void> => {
     if (!songs.length) {
       message.channel.send('There are no stacked song queues');
 
@@ -132,7 +142,7 @@ export default {
     delete songs[songIdx];
   },
 
-  skip: (message: Message, connection: VoiceConnection): void => {
+  skip: async (message: Message, connection: VoiceConnection): Promise<Error | void> => {
     if (message.member && message.member.voice && !message.member.voice.channel) {
       message.channel.send('You have to be in a voice channel to stop the music!');
 
@@ -143,19 +153,19 @@ export default {
     message.channel.send('\`successfully skip\`');
   },
 
-  pause: (message: Message, connection: VoiceConnection, queue: QUEUE): void => {
+  pause: async (message: Message, connection: VoiceConnection, queue: QUEUE): Promise<Error | void> => {
     connection.dispatcher.pause();
 
     message.channel.send(`\`Pause | ${message.guild && message.guild.id ? queue.get(message.guild.id).songs[0].title : ''}\``);
   },
 
-  resume: (message: Message, connection: VoiceConnection, queue: QUEUE): void => {
+  resume: async (message: Message, connection: VoiceConnection, queue: QUEUE): Promise<Error | void> => {
     connection.dispatcher.resume();
 
     message.channel.send(`\`Resume | ${message.guild && message.guild.id ? queue.get(message.guild.id).songs[0].title : ''}\``);
   },
 
-  stop: (message: Message, voiceChannel: VoiceChannel, queue: QUEUE): void => {
+  stop: async (message: Message, voiceChannel: VoiceChannel, queue: QUEUE): Promise<Error | void> => {
     message.channel.send('Stop | leave channel');
     voiceChannel.leave();
 
@@ -164,11 +174,11 @@ export default {
     }
   },
 
-  avatar: (message: Message): void => {
+  avatar: async (message: Message): Promise<Error | void> => {
     message.reply(message.author.displayAvatarURL());
   },
 
-  createNames: (message: Message): void => {
+  createNames: async (message: Message): Promise<Error | void> => {
     let name = '';
     const commandString = message.toString();
     const nameLength = parseInt(
@@ -191,7 +201,7 @@ export default {
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  guildMemberAdd: (member: any): void => {
+  guildMemberAdd: async (member: any): Promise<Error | void> => {
     const channel = member.guild.channels.cache.find((ch: GuildChannel) => ch.name === 'member-log');
 
     if (!channel) return;
@@ -199,14 +209,14 @@ export default {
     channel.send(`Welcome to the server, ${member}`);
   },
 
-  undefinedConnection: (message: Message): void => {
+  undefinedConnection: async (message: Message): Promise<Error | void> => {
     message.channel.send('Invalid command syntax');
 
     return;
   }
 }
 
-const playSong = async (message: Message, guild: Guild, song: Song, queue: QUEUE): Promise<void> => {
+const playSong = async (message: Message, guild: Guild, song: Song, queue: QUEUE): Promise<Error | void> => {
   const serverQueue = queue.get(guild.id) as QueueContract;
 
   if (!serverQueue.connection) return;
@@ -238,7 +248,7 @@ const playSong = async (message: Message, guild: Guild, song: Song, queue: QUEUE
 
     message.channel.send(errMsg);
 
-    log.logger('error', errMsg);
+    log.logger('error', actionLogFileLocation, errMsg);
   });
 }
 
@@ -303,7 +313,7 @@ const getQueueContract = async (message: Message, voiceChannel: VoiceChannel, so
   return queueContract;
 }
 
-const playStream = async (message: Message, voiceChannel: VoiceChannel, serverQueue: QueueContract, queue: QUEUE, song: Song): Promise<void> => {
+const playStream = async (message: Message, voiceChannel: VoiceChannel, serverQueue: QueueContract, queue: QUEUE, song: Song): Promise<Error | void> => {
   if (!serverQueue && message.guild) {
     const queueContract = await getQueueContract(message, voiceChannel, song);
     const firstSong = queueContract.songs[0];

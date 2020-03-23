@@ -23,55 +23,55 @@ export default {
       const msgAuthor = message.author as User;
 
       if (msgContent.startsWith(`${PREFIX}help`)) {
-        actions.help(message);
+        actions.help(message).catch(e => { actions.errorHandling(message, e) });
       } else if (msgContent.startsWith(`${PREFIX}ping`)) {
-        actions.ping(message);
+        actions.ping(message).catch(e => { actions.errorHandling(message, e) });
       } else if (msgContent.startsWith(`${PREFIX}play`)) {
-        actions.play(message, serverQueue, queue);
+        actions.play(message, serverQueue, queue).catch(e => { actions.errorHandling(message, e) });
       } else if (msgContent.startsWith(`${PREFIX}search`)) {
-        actions.search(message, serverQueue, queue);
+        actions.search(message, serverQueue, queue).catch(e => { actions.errorHandling(message, e) });
       } else if(msgContent.startsWith(`${PREFIX}queue`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
-          actions.queue(message, serverQueue.songs);
+          actions.queue(message, serverQueue.songs).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}delete`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
-          actions.delete(message, serverQueue.songs);
+          actions.delete(message, serverQueue.songs).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
-          actions.skip(message, serverQueue.connection);
+          actions.skip(message, serverQueue.connection).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}pause`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
-          actions.pause(message, serverQueue.connection, queue);
+          actions.pause(message, serverQueue.connection, queue).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}resume`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
         } else {
-          actions.resume(message, serverQueue.connection, queue);
+          actions.resume(message, serverQueue.connection, queue).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}stop`)) {
         if (!serverQueue || !serverQueue.voiceChannel) {
           actions.undefinedConnection(message);
         } else {
-          actions.stop(message, serverQueue.voiceChannel, queue);
+          actions.stop(message, serverQueue.voiceChannel, queue).catch(e => { actions.errorHandling(message, e) });
         }
       } else if (msgContent.startsWith(`${PREFIX}avatar`)) {
-        actions.avatar(message);
+        actions.avatar(message).catch(e => { actions.errorHandling(message, e) });
       } else if (msgContent.startsWith(`${PREFIX}녜힁`)) {
-        actions.createNames(message);
+        actions.createNames(message).catch(e => { actions.errorHandling(message, e) });
       } else {
-        actions.invalid(message);
+        actions.invalid(message).catch(e => { actions.errorHandling(message, e) });
       }
 
       /** logging */
