@@ -73,7 +73,7 @@ export default {
     respMsg += `\n**Choose a number between** \`1-${sliceResults.length}\`\n`;
 
     /** send output */
-    message.channel.send(respMsg);
+    const searchMsg = message.channel.send(respMsg);
 
     /** make message collector */
     const filter = (msg: Message) => !isNaN(parseInt(msg.content)) && parseInt(msg.content) < sliceResults.length + 1 && parseInt(msg.content) > 0;
@@ -88,9 +88,12 @@ export default {
         url: 'https://www.youtube.com/watch?v=' + songInfo.id.videoId
       };
 
-      playStream(message, voiceChannel, serverQueue, queue, song);
-    })
+      searchMsg.then(searchMsg => {
+        searchMsg.delete();
+      });
 
+      playStream(message, voiceChannel, serverQueue, queue, song);
+    });
   },
 
   queue: (message: Message, songs: Array<Song>): void => {
@@ -100,7 +103,28 @@ export default {
       return;
     }
 
-    message.channel.send(`\`Staked queues | \n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
+    message.channel.send(`\`Staked queues\n ${songs.map((v: Song, i: number) => `${i + 1} : ${v.title} \n`).join(' ')}\``);
+  },
+
+  delete: (message: Message, songs: Array<Song>): void => {
+    if (!songs.length) {
+      message.channel.send('There are no stacked song queues');
+
+      return;
+    }
+
+    const songIdx = parseInt(message.toString().split(' ')[1]) - 1;
+
+    /** 현재 재생중인 노래는 삭제 안되도록 */
+    if (songIdx === 0) {
+      message.channel.send('This song is currently playing. Skip it to get rid of it');
+
+      return;
+    }
+
+    message.channel.send(`\`${songs[songIdx].title}\` is successfully deleted`);
+
+    delete songs[songIdx];
   },
 
   skip: (message: Message, connection: VoiceConnection): void => {

@@ -3,6 +3,7 @@ export type USAGE_COMMANDS =
   | 'play'
   | 'search'
   | 'stop'
+  | 'delete'
   | 'skip'
   | 'pause'
   | 'resume'

@@ -36,6 +36,12 @@ export default {
         } else {
           actions.queue(message, serverQueue.songs);
         }
+      } else if (msgContent.startsWith(`${PREFIX}delete`)) {
+        if (!serverQueue || !serverQueue.connection) {
+          actions.undefinedConnection(message);
+        } else {
+          actions.delete(message, serverQueue.songs);
+        }
       } else if (msgContent.startsWith(`${PREFIX}skip`)) {
         if (!serverQueue || !serverQueue.connection) {
           actions.undefinedConnection(message);
