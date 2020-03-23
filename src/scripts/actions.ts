@@ -15,16 +15,17 @@ export default {
 
   help: (message: Message): void => {
     message.channel.send(`
-    \`[commands] => (parameters)\`
+\`[commands] => (parameters)\`
 
 **MUSIC**
 **[1]** \`play => youtube url\`
-**[2]** \`search => search word && limit (default 10)\`
-**[3]** \`stop\`
-**[4]** \`skip\`
-**[5]** \`queue\`
-**[6]** \`pause\`
-**[7]** \`resume\`
+**[2]** \`search => search word\`
+**[3]** \`delete => queue number\`
+**[4]** \`stop\`
+**[5]** \`skip\`
+**[6]** \`queue\`
+**[7]** \`pause\`
+**[8]** \`resume\`
 
 **UTILS**
 **[1]** \`ping\`
@@ -52,14 +53,16 @@ export default {
   },
 
   search: async (message: Message, serverQueue: QueueContract, queue: QUEUE): Promise<void> => {
-    const searchKey = message.toString().split(' ')[1],
-          searchLimit = parseInt(message.toString().split(' ')[2]) || 10;
+    const searchKey = message.toString().split('!search')[1],
+          searchLimit = 10;
 
     if (!searchKey) {
       message.channel.send('Please enter a word to search for');
 
       return;
     }
+
+    message.reply(`search... ${searchKey}`);
 
     const searchResults = await yt.searchVideo(searchKey, searchLimit);
     const sliceResults = searchResults.slice(0, searchLimit);
@@ -87,6 +90,8 @@ export default {
         title: songInfo.snippet.title,
         url: 'https://www.youtube.com/watch?v=' + songInfo.id.videoId
       };
+
+      message.channel.send(song.url);
 
       searchMsg.then(searchMsg => {
         searchMsg.delete();
